@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: 2010-09-09
+AWSTemplateFormatVersion: '2010-09-09'
 
 Description: |
   This CloudFormation Template was written for running Kittens Carousel Static Website on EC2. 
