@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: 2010-09-09
 
 Description: |
   This CloudFormation Template was written for running Kittens Carousel Static Website on EC2. 
@@ -6,20 +6,74 @@ Description: |
   security group which allows http connections on port 80 and ssh port 22 from anywhere. Kittens Carousel Static Website
   is downloaded from my Public Github repository, then deployed on Apache Web Server.
 
+# parametre özelliği ile key pair seçmeli gelmesini sağlar
 Parameters:
-  
-Resources: 
-  
+  latestAmiId:
+    Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
+    Default: "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64"
+  myInstanceType:
+    Description: t2 micro Kitten-101 EC2
+    Type: String
+    Default:
+      - t3.micro
+      - t3.nano
+  myKeyPair:
+    Description: choose yor key pair
+    Type: AWS::EC2::KeyPair::KeyName
+    Default:
+
+Resources:
   myWebServer:
-    
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref latestAmiId
+      InstanceType: !Ref myInstanceType
+      # yukarıda tanımlanmış olan key pair seçilir
+      KeyName: !Ref myKeyPair
+      SecurityGroupIds:
+        - !Ref mySecGrp # GetAtt mySecGrp.GroupId
+      SecurityGroups:
+        - "String"
+      Tags:
+        - Key: "Name"
+          # '!Sub' subsituaion işlem yapılırken hata verme eksik olan bilgiler işlemler tamamlandıktan sonra kayıt edilecektir anlamına gelir
+          Value: !Sub Web Server of ${AWS::StackName} Stack
+      #userdata alanına yazılacak kod encoded olmak zorunda
+      UserData: !Base64 |
+        #! /bin/bash
+        dnf update -y
+        dnf install httpd -y
+        systemctl start httpd
+        systemctl enable httpd
+        cd /var/www/html
+        FOLDER="https://raw.githubusercontent.com/koraykoksal/aws/refs/heads/main/projects/101-kittens-carousel/static-web"
+        wget ${FOLDER}/index.html
+        wget ${FOLDER}/cat0.jpg
+        wget ${FOLDER}/cat1.jpg
+        wget ${FOLDER}/cat2.jpg
 
   mySecGrp:
-    
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "allow ssh and http" # Required
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: "Name"
+          Value: "koray-kitten-19"
+        - Key: "cohort"
+          Value: "19"
 
 Outputs:
   webSiteURL:
-    Description: URL of website
+    Description: IP of website
     Value: !Sub
-      - 
-      - 
-   
+      - http://${publicIP}
+      - publicIP: !GetAtt myWebServer.PublicIp
