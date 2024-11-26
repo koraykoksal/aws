@@ -1,12 +1,13 @@
 const readline = require("readline");
 
+ // Store phonebook entries
 const phonebook = {
     koray:"05425304155",
     ahmet:"12345678900",
     mehmet:"1313131313",
     ayşe:"123987456909",
     fatma:"98765432100",
-}; // Store phonebook entries
+};
 
 const rl = readline.createInterface({
     input: process.stdin,
